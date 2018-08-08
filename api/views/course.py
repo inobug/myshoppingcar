@@ -1,69 +1,93 @@
+import json
+from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSetMixin
 from rest_framework.response import Response
-from django import views
 from api import models
 from api.serializers import course as api_serializers
-from rest_framework.views import APIView
 from api.utils.response import BaseResponse
-# 版本号
-from rest_framework.versioning import URLPathVersioning
-# Create your views here.
-# a.查看所有学位课并打印学位课名称以及授课老师
-class DegreeCourse(APIView):
-    def get(self,request,*args,**kwargs):
-        ret = BaseResponse()
-        try:
-            all_degreecourse = models.DegreeCourse.objects.all()
-            ser_obj=api_serializers.DegreeCourseSerializer(all_degreecourse,many=True)
-            ret.data = ser_obj.data
-        except Exception as  e:
-            ret.code = 500
-            ret.error = '获取数据失败！'
-        return Response(ret.dict)
-# b.查看所有学位课并打印学位课名称以及学位课的奖学金
-class DegreeCourseScholarshipView(APIView):
-    def get(self, request, *args, **kwargs):
-        ret = BaseResponse()
-        try:
-            all_degreecourse = models.DegreeCourse.objects.all()
-            print(11)
-            ser_obj = api_serializers.DegreeCourseScholarshipSerializer(all_degreecourse, many=True)
-            ret.data = ser_obj.data
-        except Exception as  e:
-            ret.code = 500
-            ret.error = '获取数据失败！'
-        return Response(ret.dict)
-# #c.展示所有的专题课
-class CourseView(APIView):
-    def get(self,request,*args,**kwargs):
+
+
+class CoursesView(ViewSetMixin,APIView):
+    SHOPPING_CAR = {'1':{}}
+    def list(self,request,*args,**kwargs):
+        # response = {'code':1000,'data':None,'error':None}
         ret = BaseResponse()
         try:
             all_course = models.Course.objects.filter(degree_course__isnull=True).all()
-            ser_obj=api_serializers.CourseSerializer(all_course,many=True)
-            ret.data=ser_obj.data
-        except Exception as  e:
+            ser_obj = api_serializers.CourseModelSerializer(all_course, many=True)
+            ret.data = ser_obj.data
+        except Exception as e:
             ret.code = 500
-            ret.error='获取数据失败！'
+            ret.error = '获取数据失败'
+
         return Response(ret.dict)
-# 课程详情api
-class CourseDetailView(APIView):
-    def get(self,request,pk,*args,**kwargs):
-        ret = BaseResponse()
-        # try:
-        all_coursedetail = models.Course.objects.get(id=pk)
-        ser_obj=api_serializers.CourseModelSerializer(instance=all_coursedetail)
-        ret.data=ser_obj.data
-        # except Exception as e :
-        #     ret.code=500
-        #     ret.error='获取数据失败！'
-        return Response(ret.dict)
+    # 用户将课程加入购物车
+    def create(self,request,*args,**kwargs):
+        """
+        增加
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        # 接收后端发送的数据
+        ret=json.loads(request.body.decode('utf8'))
+        # 课程id
+        id=ret['1']['course_id']
+        # 课程名称
+        course_name=ret['1']['course_name']
+        # 价格策略
+        valid_period=ret['1']['end_price']
+        # 课程价格
+        course_price=ret['1']['course_price']
+        # 先找到此课程
+        verify_course=models.Course.objects.filter(id=id).first()
+        # 如果存在
+        if verify_course:
+            # 找价格策略
+            ser_obj = api_serializers.PricepolicySerializer(verify_course)
+            # 如果存在
+            if  valid_period in  ser_obj.data['pricepolicy'][0]:
+                # 写入购物车
+                self.SHOPPING_CAR['1'][id]= {'title':course_name,'price':course_price,'price_list':ser_obj.data['pricepolicy'][1]}
+                # 打印购物车内容
+                print(self.SHOPPING_CAR)
+                # 成功返回数据
+                return Response('加入购物车成功')
+            else:
+                # 价格策略失败返回数据
+                return Response('不存在此价格策略')
+        #     不存在课程返回数据
+        return Response('不存在这个课程')
 
+    def retrieve(self, request, pk, *args, **kwargs):
+        response = {'code': 1000, 'data': None, 'error': None}
+        try:
+            course = models.Course.objects.get(id=pk)
+            ser = api_serializers.CourseModelSerializer(instance=course)
+            response['data'] = ser.data
+        except Exception as e:
+            response['code'] = 500
+            response['error'] = '获取数据失败'
+        return Response(response)
 
-# d. 查看id=1的学位课对应的所有模块名称
+    def update(self,request, pk, *args, **kwargs):
+        """
+        修改
+        :param request:
+        :param pk:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        pass
 
-# e.获取id = 1的专题课，并打印：课程名、级别(中文)、why_study、what_to_study_brief、所有recommend_courses
-
-# f.获取id = 1的专题课，并打印该课程相关的所有常见问题
-
-# g.获取id = 1的专题课，并打印该课程相关的课程大纲
-
-# h.获取id = 1的专题课，并打印该课程相关的所有章节
+    def destroy(self, request, pk, *args, **kwargs):
+        """
+        删除
+        :param request:
+        :param pk:
+        :param args:
+        :param kwargs:
+        :return:
+        """

@@ -35,7 +35,6 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Course
         fields = "__all__"
-        depth=2
 
 # class CourseDetailSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -60,11 +59,10 @@ class CourseModelSerializer(serializers.ModelSerializer):
     courseoutline=serializers.SerializerMethodField()
     #所有的章节
     coursechapter = serializers.SerializerMethodField()
-    # 价格策略
-    pricepolicy=serializers.SerializerMethodField()
     class Meta:
         model = models.Course
-        fields = ['id','name','level_name','hours','course_slogan','recommend_courses','whystudy','what_to_study_brief','oftenaskedquestion','courseoutline','coursechapter','pricepolicy']
+        fields = ['id','name','level_name','hours','course_slogan','recommend_courses','whystudy','what_to_study_brief','oftenaskedquestion','courseoutline','coursechapter']
+
     def get_recommend_courses(self,row):
         recommend_list = row.coursedetail.recommend_courses.all()
         return [ {'id':item.id,'name':item.name} for item in recommend_list]
@@ -77,14 +75,3 @@ class CourseModelSerializer(serializers.ModelSerializer):
     def get_coursechapter(self,row):
         coursechapter_list = row.coursechapters.all()
         return [{'name':item.name} for item in coursechapter_list]
-    def get_pricepolicy(self,row):
-        coursechapter_list = row.price_policy.all()
-        return [{'price':item.price,'valid_period':item.valid_period,'id':item.id} for item in coursechapter_list]
-class PricepolicySerializer(serializers.ModelSerializer):
-    pricepolicy = serializers.SerializerMethodField()
-    class Meta:
-        model = models.Course
-        fields = ['pricepolicy']
-    def get_pricepolicy(self, row):
-            coursechapter_list = row.price_policy.all()
-            return [item.valid_period for item in coursechapter_list],[{item.id:item.valid_period }for item in coursechapter_list]
