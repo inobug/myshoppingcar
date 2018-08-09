@@ -8,4 +8,6 @@
 	 服务端实现api：
 	 	1.查看所有课程
 		2.进行操作redis实现用户的购物车的增删改查功能。
+	 本程序是服务端：需要配合vue端操作
+	 		vue端：https://github.com/inobug/luffcity_vue.git
 	
