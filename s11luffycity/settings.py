@@ -122,9 +122,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+# 版本设置
 REST_FRAMEWORK={
     'DEFAULT_VERSIONING_CLASS':'rest_framework.versioning.URLPathVersioning',
     'VERSION_PARAM':'version',
     'DEFAULT_VERSION':'v1',
     'ALLOWED_VERSIONS':['v1','v2'],
 }
+# 拼接redis 的名称
+LUFFY_SHOPPING_CAR = 'shoppingcar_%s_%s'

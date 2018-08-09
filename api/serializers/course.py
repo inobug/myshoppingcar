@@ -79,7 +79,16 @@ class CourseModelSerializer(serializers.ModelSerializer):
         return [{'name':item.name} for item in coursechapter_list]
     def get_pricepolicy(self,row):
         coursechapter_list = row.price_policy.all()
-        return [{'price':item.price,'valid_period':item.valid_period,'id':item.id} for item in coursechapter_list]
+        price_policy_dict={}
+        for item in coursechapter_list:
+            temp = {
+                'id':item.id,
+                'price':item.price,
+                'valid_period':item.valid_period,
+                'valid_period_display':item.get_valid_period_display()
+            }
+            price_policy_dict[item.id] = temp
+        return  price_policy_dict
 class PricepolicySerializer(serializers.ModelSerializer):
     pricepolicy = serializers.SerializerMethodField()
     class Meta:
